@@ -1,0 +1,111 @@
+name: $(Build.SourceBranchName).$(date:yyyyMMdd)$(rev:.r)
+
+variables:
+  - group: 'Demo_Spring'
+  - name: 'artifactory.Repository'
+    value: 'build-Demo_Spring'
+  - name: 'projectName'
+    value: 'Demo_Spring'
+  - name: 'artifactName'
+    value: 'demospring.jar'
+
+
+trigger:
+  branches:
+    include:
+      - master
+      - develop
+      - release
+      - feature/*
+
+jobs:
+  - job: CI
+    displayName: 'Build / CI'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - task: Gradle@2
+        displayName: 'Gradle -> Build'
+        inputs:
+          gradleWrapperFile: '$(System.DefaultWorkingDirectory)/gradlew'
+          workingDirectory: '$(System.DefaultWorkingDirectory)'
+          tasks: 'clean build -x test'
+          publishJUnitResults: false
+          javaHomeOption: 'JDKVersion'
+          sonarQubeRunAnalysis: false
+          spotBugsAnalysis: false
+        condition: succeeded()
+
+      - task: Gradle@2
+        displayName: 'Gradle -> Unit Tests'
+        inputs:
+          gradleWrapperFile: '$(System.DefaultWorkingDirectory)/gradlew'
+          workingDirectory: '$(System.DefaultWorkingDirectory)'
+          tasks: 'clean test'
+          publishJUnitResults: false
+          javaHomeOption: 'JDKVersion'
+          sonarQubeRunAnalysis: false
+          spotBugsAnalysis: false
+        condition: succeeded()
+
+      - task: SonarCloudPrepare@1
+        displayName: "SonarCloud Preparation"
+        inputs:
+          SonarCloud: 'SonarCloud'
+          organization: '<organization>'
+          scannerMode: 'CLI'
+          configMode: 'manual'
+          cliProjectKey: '<project-key>'
+          cliProjectName: '<project-name>'
+          extraProperties: |
+            sonar.host.url=<sonarcloud-url>
+            sonar.login=<sonarcloud-token>
+
+      - task: SonarCloudAnalyze@1
+        displayName: "SonarCloud Analysis"
+
+      - task: SonarCloudBreaker@4
+        displayName: "Breaker SonarCloud"
+        inputs:
+          SonarCloud: 'SonarCloudConnection'
+          failIfCoverageLessThan: '80'
+
+      - task: SonarCloudPublish@1
+        inputs:
+          pollingTimeoutSec: '300'
+
+      - task: Docker@2
+        displayName: "Create/Publish Docker image"
+        inputs:
+          containerRegistry: 'myContainerRegistryConnection'
+          repository: 'myContainerRegistry/repositoryName'
+          command: 'buildAndPush'
+          Dockerfile: '**/Dockerfile'
+          buildContext: '.'
+          tags: |
+            $(Build.BuildId)
+            latest
+
+      - task: CopyFiles@2
+        displayName: "Copy -> Copy Files"
+        inputs:
+          SourceFolder: $(System.DefaultWorkingDirectory)/build/libs
+          TargetFolder: "$(Build.ArtifactStagingDirectory)"
+          CleanTargetFolder: true
+        condition: succeeded()
+
+      - task: ArchiveFiles@2
+        displayName: "Task -> Zip Artifact"
+        inputs:
+          rootFolderOrFile: $(System.DefaultWorkingDirectory)/build/libs
+          archiveType: tar
+          tarCompression: gz
+          archiveFile: "$(Build.StagingDirectory)/$(artifactName).tar.gz"
+        condition: succeeded()
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Artifactory -> Publish Artifact"
+        inputs:
+          PathtoPublish: $(System.DefaultWorkingDirectory)/build/libs
+          ArtifactName: Artifact
+        condition: succeeded()
