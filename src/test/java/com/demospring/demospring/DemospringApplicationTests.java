@@ -10,4 +10,8 @@ class DemospringApplicationTests {
 	void contextLoads() {
 	}
 
+	@Test
+	public void applicationContextTest() {
+		DemospringApplication.main(new String[] {});
+	}
 }

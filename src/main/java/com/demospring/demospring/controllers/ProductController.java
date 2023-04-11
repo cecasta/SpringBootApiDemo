@@ -22,11 +22,11 @@ public class ProductController {
     }
 
 
-    @PostMapping()
+    @PostMapping(produces="application/json")
     public ResponseEntity<Product> create(@RequestBody Product product){
         try {
             var _product = productService.createProduct(product);
-            return new ResponseEntity<>(_product, HttpStatus.OK);
+            return new ResponseEntity<>(_product, HttpStatus.CREATED);
         } catch (Exception e){
             e.printStackTrace();
         }
