@@ -1,19 +1,18 @@
 name: $(Build.SourceBranchName).$(date:yyyyMMdd)$(rev:.r)
 
 variables:
-  - group: 'Demo_Spring'
   - name: 'artifactory.Repository'
     value: 'build-Demo_Spring'
   - name: 'projectName'
     value: 'Demo_Spring'
   - name: 'artifactName'
-    value: 'demospring.jar'
+    value: 'demospring'
 
 
 trigger:
   branches:
     include:
-      - master
+      - main
       - develop
       - release
       - feature/*
@@ -32,43 +31,44 @@ jobs:
           tasks: 'clean build -x test'
           publishJUnitResults: false
           javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '1.17'
           sonarQubeRunAnalysis: false
           spotBugsAnalysis: false
-        condition: succeeded()
 
       - task: Gradle@2
         displayName: 'Gradle -> Unit Tests'
         inputs:
           gradleWrapperFile: '$(System.DefaultWorkingDirectory)/gradlew'
           workingDirectory: '$(System.DefaultWorkingDirectory)'
-          tasks: 'clean test'
+          tasks: 'test'
           publishJUnitResults: false
+          codeCoverageToolOption: 'JaCoCo'
+          codeCoverageClassFilesDirectories: 'build/classes/main/'
           javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '1.17'
           sonarQubeRunAnalysis: false
           spotBugsAnalysis: false
         condition: succeeded()
-
+      
       - task: SonarCloudPrepare@1
         displayName: "SonarCloud Preparation"
         inputs:
           SonarCloud: 'SonarCloud'
-          organization: '<organization>'
+          organization: 'londono652'
           scannerMode: 'CLI'
           configMode: 'manual'
-          cliProjectKey: '<project-key>'
-          cliProjectName: '<project-name>'
-          extraProperties: |
-            sonar.host.url=<sonarcloud-url>
-            sonar.login=<sonarcloud-token>
+          cliProjectKey: 'londono652_Springboot-Api-Demo'
+          cliProjectName: 'Springboot-Api-Demo'
+          cliSources: '.'
+          extraProperties: 'sonar.java.binaries = $(System.DefaultWorkingDirectory)/build/libs'
 
       - task: SonarCloudAnalyze@1
         displayName: "SonarCloud Analysis"
 
-      - task: SonarCloudBreaker@4
-        displayName: "Breaker SonarCloud"
+      - task: sonarcloud-buildbreaker@2
         inputs:
-          SonarCloud: 'SonarCloudConnection'
-          failIfCoverageLessThan: '80'
+          SonarCloud: 'sonarcloud'
+          organization: 'londono652'
 
       - task: SonarCloudPublish@1
         inputs:
@@ -77,27 +77,20 @@ jobs:
       - task: Docker@2
         displayName: "Create/Publish Docker image"
         inputs:
-          containerRegistry: 'myContainerRegistryConnection'
-          repository: 'myContainerRegistry/repositoryName'
+          containerRegistry: 'dockerhub'
+          repository: 'londono652/springboot-api-demo'
           command: 'buildAndPush'
           Dockerfile: '**/Dockerfile'
           buildContext: '.'
           tags: |
             $(Build.BuildId)
             latest
-
-      - task: CopyFiles@2
-        displayName: "Copy -> Copy Files"
-        inputs:
-          SourceFolder: $(System.DefaultWorkingDirectory)/build/libs
-          TargetFolder: "$(Build.ArtifactStagingDirectory)"
-          CleanTargetFolder: true
-        condition: succeeded()
-
+      
       - task: ArchiveFiles@2
         displayName: "Task -> Zip Artifact"
         inputs:
           rootFolderOrFile: $(System.DefaultWorkingDirectory)/build/libs
+          includeRootFolder: false
           archiveType: tar
           tarCompression: gz
           archiveFile: "$(Build.StagingDirectory)/$(artifactName).tar.gz"
@@ -106,6 +99,6 @@ jobs:
       - task: PublishBuildArtifacts@1
         displayName: "Artifactory -> Publish Artifact"
         inputs:
-          PathtoPublish: $(System.DefaultWorkingDirectory)/build/libs
+          PathtoPublish: $(Build.StagingDirectory)
           ArtifactName: Artifact
         condition: succeeded()

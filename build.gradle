@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.0.5'
 	id 'io.spring.dependency-management' version '1.1.0'
+	id 'jacoco'
 }
 
 group = 'com.demospring'
@@ -25,6 +26,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.jacoco:org.jacoco.core:0.8.7'
 }
 
 tasks.named('test') {
@@ -32,5 +34,19 @@ tasks.named('test') {
 }
 
 jar {
-	enabled = true
+	enabled = false
+}
+
+jacoco {
+	toolVersion = "0.8.7"
+}
+
+test {
+	jacoco {
+		enabled = true
+	}
+}
+
+jacoco {
+	reportsDir = file("$buildDir/reports/jacoco")
 }
