@@ -26,6 +26,9 @@ class ProductServiceTest {
     private Product _product;
     private Product productBD;
 
+    private Product _productnew;
+
+
     @BeforeEach
     void setUp() {
         buildObjects();
@@ -37,6 +40,63 @@ class ProductServiceTest {
         closeable.close();
     }
 
+
+    @Nested
+    @DisplayName("get product")
+    class GetProduct {
+
+        @Test
+        @DisplayName("it should return something with id 1")
+        void itShouldReturnSomethingWithId() {
+
+            // Given
+            given(repository.save(_product)).willReturn(productBD);
+
+            // When
+            productService.getProduct(1L);
+
+            // Then
+            then(repository).should().equals(_product);
+        }
+    }
+
+    @Nested
+    @DisplayName("delete product")
+    class DeleteProduct {
+
+        @Test
+        @DisplayName("after delete, it shouldn´t return something with id 1 ")
+        void itShouldntReturnSomethingWithId() {
+
+            // Given
+            given(repository.save(_product)).willReturn(productBD);
+
+            // When
+            productService.deleteProduct(1L);
+
+            // Then
+            then(repository).should().deleteById(1L);
+        }
+    }
+
+    @Nested
+    @DisplayName("update product")
+    class UpdateProduct {
+
+        @Test
+        @DisplayName("it should return something updated")
+        void itShouldReturnUpdated() {
+
+            // Given
+            given(repository.save(_product)).willReturn(productBD);
+
+            // When
+            productService.updateProduct(_productnew);
+
+            // Then
+            then(repository).should().save(_productnew);
+        }
+    }
 
     @Nested
     @DisplayName("create product")
@@ -57,7 +117,6 @@ class ProductServiceTest {
         }
     }
 
-
     private void buildObjects() {
         _product = Product.builder()
                 .name("CocaCola L1.5")
@@ -76,5 +135,16 @@ class ProductServiceTest {
                 .unitPrice(5000)
                 .barCode("KHYRTYTYYYYYYY")
                 .build();
+
+        _productnew = Product.builder()
+                .id(1)
+                .name("Coca cola 3l")
+                .description("Coca cola 3l")
+                .type("Liquidos")
+                .amount(100)
+                .unitPrice(5000)
+                .barCode("KHYRTYTYYYYYYY")
+                .build();
+
     }
 }

@@ -30,6 +30,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.jacoco:org.jacoco.core:0.8.7'
 }
 
 test {
@@ -53,4 +54,22 @@ jacocoTestReport {
 		xml.required = true
 		html.required = true
 	}
+}
+
+jar {
+	enabled = false
+}
+
+jacoco {
+	toolVersion = "0.8.7"
+}
+
+test {
+	jacoco {
+		enabled = true
+	}
+}
+
+jacoco {
+	reportsDir = file("$buildDir/reports/jacoco")
 }
