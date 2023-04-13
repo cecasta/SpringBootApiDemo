@@ -10,8 +10,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -43,36 +41,43 @@ class ProductControllerTest {
         testProduct.setBarCode("KJHAHHJAAHJAJKA");
     }
 
-    @Test
-    @DisplayName("It should return product")
-    public void givenProduct_whenCreateProduct_thenReturnProduct()
-            throws Exception {
 
-        when(productService.createProduct(testProduct)).thenReturn(testProduct);
+    @Nested
+    @DisplayName("Controller: create product")
+    class ControllerCreateProduct {
 
+        @Test
+        @DisplayName("It should return product")
+        public void shouldCreateProduct_thenReturnProduct()
+                throws Exception {
 
-        mvc.perform(post("/api/v1/product")
-                        .content(objectMapper.writeValueAsString(testProduct))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value(testProduct.getName()));
-
-    }
+            when(productService.createProduct(testProduct)).thenReturn(testProduct);
 
 
-    @Test
-    @DisplayName("It should return exception when create product")
-    public void givenProduct_whenCreateProduct_thenReturnException()
-            throws Exception {
+            mvc.perform(post("/api/v1/product")
+                            .content(objectMapper.writeValueAsString(testProduct))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.name").value(testProduct.getName()));
 
-        when(productService.createProduct(testProduct)).thenThrow();//
+        }
 
 
-        mvc.perform(post("/api/v1/product")
-                        .content(objectMapper.writeValueAsString(testProduct))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is5xxServerError());
+        @Test
+        @DisplayName("It should return exception when create product")
+        public void shouldCreateProduct_thenReturnException()
+                throws Exception {
+
+            when(productService.createProduct(testProduct)).thenThrow();//
+
+
+            mvc.perform(post("/api/v1/product")
+                            .content(objectMapper.writeValueAsString(testProduct))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().is5xxServerError());
+
+        }
 
     }
 
