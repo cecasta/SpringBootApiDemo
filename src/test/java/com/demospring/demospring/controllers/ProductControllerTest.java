@@ -2,37 +2,35 @@ package com.demospring.demospring.controllers;
 
 import com.demospring.demospring.models.entity.Product;
 import com.demospring.demospring.services.ProductService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+@WebMvcTest(ProductController.class)
 class ProductControllerTest {
 
-
+    @Autowired
     private MockMvc mvc;
 
     @MockBean
     private ProductService productService;
     Product testProduct;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp(WebApplicationContext wac) {
-        // instance mvc
-        this.mvc = MockMvcBuilders.standaloneSetup(new ProductControllerTest()).build();
-        this.mvc = MockMvcBuilders.webAppContextSetup(wac).build();
 
 
         testProduct = new Product();
@@ -47,22 +45,35 @@ class ProductControllerTest {
 
     @Test
     @DisplayName("It should return product")
-    @Disabled
     public void givenProduct_whenCreateProduct_thenReturnProduct()
             throws Exception {
-        // Given
 
-        //given(productService.createProduct(testProduct)).willReturn(testProduct);
+        when(productService.createProduct(testProduct)).thenReturn(testProduct);
 
 
-        MvcResult result = this.mvc.perform(post("/test/simple/post")
-                        .content(testProduct.toString())
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        mvc.perform(post("/api/v1/product")
+                        .content(objectMapper.writeValueAsString(testProduct))
+                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andReturn();
+                .andExpect(jsonPath("$.name").value(testProduct.getName()));
 
-        Assertions.assertEquals("{\"id\":1}", result.getResponse().getContentAsString());
+    }
+
+
+    @Test
+    @DisplayName("It should return exception when create product")
+    public void givenProduct_whenCreateProduct_thenReturnException()
+            throws Exception {
+
+        when(productService.createProduct(testProduct)).thenThrow();//
+
+
+        mvc.perform(post("/api/v1/product")
+                        .content(objectMapper.writeValueAsString(testProduct))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+
     }
 
 }
