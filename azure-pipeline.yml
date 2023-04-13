@@ -13,9 +13,6 @@ trigger:
   branches:
     include:
       - main
-      - develop
-      - release
-      - feature/*
 
 jobs:
   - job: CI
