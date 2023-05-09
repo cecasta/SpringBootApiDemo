@@ -3,6 +3,11 @@ package com.demospring.demospring.controllers;
 import com.demospring.demospring.models.entity.Product;
 import com.demospring.demospring.repositories.ProductRepository;
 import com.demospring.demospring.services.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +30,16 @@ public class ProductController {
 
 
     @PostMapping(produces="application/json")
+    @Operation(summary = "Crear productos de la tienda",
+            description = "Este metedo crea productos para la tienda",
+            tags = { "Product"})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Created - Crear producto",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Product.class))}),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "404", description = " Page Not Found", content = @Content),
+            @ApiResponse(responseCode = "500", description = " Internal server error - Llamar soporte", content = @Content)})
     public ResponseEntity<Product> create(@RequestBody Product product){
         try {
             var _product = productService.createProduct(product);
@@ -37,6 +52,16 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Lista un producto de la tienda",
+            description = "Este metedo lista un producto de la tienda recibiendo el id del producto",
+            tags = { "Product"})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success - Lista producto",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Product.class))}),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "404", description = " Page Not Found", content = @Content),
+            @ApiResponse(responseCode = "500", description = " Internal server error - Llamar soporte", content = @Content)})
     public ResponseEntity<Product> list(@PathVariable("id") long id) {
         Optional<Product> _product = productService.getProduct(id);
         if (_product.isPresent()) {
